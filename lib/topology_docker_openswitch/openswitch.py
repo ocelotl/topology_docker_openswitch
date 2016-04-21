@@ -37,8 +37,9 @@ from time import sleep
 from os.path import exists
 from json import dumps, loads
 from shlex import split as shsplit
-from subprocess import check_call, check_output
+from subprocess import check_call, check_output, CalledProcessError
 from socket import AF_UNIX, SOCK_STREAM, socket, gethostname
+from re import search
 
 import yaml
 
@@ -186,6 +187,23 @@ def main():
             break
     else:
         raise Exception('Timed out while waiting for cur_cfg.')
+
+    logging.info('Waiting for switchd status to be active...')
+    switchd_status_cmd = 'systemctl status switchd'
+    for i in range(0, config_timeout):
+        try:
+            output = check_output(switchd_status_cmd.split())
+        except CalledProcessError as error:
+            output = error.output
+        if not search(r'Active: active \(running\)', output):
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception(
+            'Timed out while waiting for switchd status to be active.'
+        )
+
 
 if __name__ == '__main__':
     main()

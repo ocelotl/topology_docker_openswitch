@@ -1,2 +1,1 @@
 six
-topology_docker>=1.5.0
